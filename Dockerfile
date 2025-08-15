@@ -1,24 +1,41 @@
-FROM python:3.10-slim
+# --- Stage 1: Install dependencies ---
+FROM python:3.11-slim as builder
 
-# системные зависимости
+# Обновление и установка необходимых системных пакетов
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
     build-essential \
+    ffmpeg \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Установка pip последней версии
+RUN pip install --upgrade pip
+
+# Копируем только файл зависимостей
+WORKDIR /app
+COPY requirements.txt .
+
+# Установка зависимостей
+RUN pip install --no-cache-dir -r requirements.txt
+
+# --- Stage 2: Сборка финального образа ---
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# копируем только зависимости сначала
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# Копируем зависимости из builder stage
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# копируем остальной код
-COPY . /app
+# Копируем исходный код проекта (без больших файлов)
+COPY . .
 
-# выставляем переменные
-ENV MODEL_PATH=so-vits-svc/logs/44k/G_40800.pth
-ENV CONFIG_PATH=so-vits-svc/config.json
+# Устанавливаем переменные окружения
+ENV VOICE_SERVER_URL=https://<project>.up.railway.app/speak
 
-EXPOSE 5000
-CMD ["python", "app.py"]
+# Expose порт, который используется FastAPI/Flask
+EXPOSE 8000
+
+# Команда для запуска сервера (замени на актуальную)
+CMD ["python", "server.py"]
