@@ -1,24 +1,26 @@
-# Используем предсобранный PyTorch образ с CUDA (ускоряет сборку)
-FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+# Используем минимальный Python образ
+FROM python:3.11-slim
 
-# Обновляем pip и устанавливаем базовые зависимости
-RUN pip install --upgrade pip setuptools wheel
+# Устанавливаем системные зависимости
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем нужные Python-пакеты
-RUN pip install \
-    gradio>=3.7.0 \
-    numpy==1.23.5 \
-    torchcrepe \
-    torchaudio \
-    ffmpeg-python \
-    SoundFile==0.12.1 \
-    pyyaml \
-    einops
-
-# Копируем проект в контейнер
+# Создаём рабочую директорию
 WORKDIR /app
-COPY . /app
 
-# Указываем команду запуска (замени на свою, например запуск сервера Gradio)
-CMD ["python", "app.py"]
+# Копируем только нужные файлы
+COPY requirements.txt .
+COPY inference.py .
+COPY onnx_model.onnx ./models/onnx_model.onnx
+
+# Устанавливаем Python зависимости
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Экспортируем порт приложения
+EXPOSE 7860
+
+# Запуск инференса
+CMD ["python", "inference.py"]
 
