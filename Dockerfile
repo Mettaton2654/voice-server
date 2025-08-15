@@ -1,26 +1,24 @@
-# Используем лёгкий базовый образ
-FROM python:3.11-slim
+# Используем предсобранный PyTorch образ с CUDA (ускоряет сборку)
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
-    git \
-    build-essential \
-    libsndfile1 \
-    && rm -rf /var/lib/apt/lists/*
+# Обновляем pip и устанавливаем базовые зависимости
+RUN pip install --upgrade pip setuptools wheel
 
-# Создаём рабочую директорию
+# Устанавливаем нужные Python-пакеты
+RUN pip install \
+    gradio>=3.7.0 \
+    numpy==1.23.5 \
+    torchcrepe \
+    torchaudio \
+    ffmpeg-python \
+    SoundFile==0.12.1 \
+    pyyaml \
+    einops
+
+# Копируем проект в контейнер
 WORKDIR /app
+COPY . /app
 
-# Копируем только необходимые файлы
-COPY requirements.txt .
+# Указываем команду запуска (замени на свою, например запуск сервера Gradio)
+CMD ["python", "app.py"]
 
-# Устанавливаем зависимости
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Копируем остальной код (меньше файлов — меньше образ)
-COPY . .
-
-# Указываем команду запуска
-CMD ["python", "inference_server/app.py"]
