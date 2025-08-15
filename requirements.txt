@@ -1,6 +1,13 @@
-numpy==1.23.5
-torch
-torchaudio
 ffmpeg-python
-SoundFile==0.12.1
 gradio>=3.7.0
+numpy==1.23.5
+scipy==1.10.0
+SoundFile==0.12.1
+pyworld
+onnx
+onnxruntime
+onnxsim
+onnxoptimizer
+tqdm
+rich
+loguru
