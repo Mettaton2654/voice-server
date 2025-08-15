@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Установка pip последней версии
-RUN pip install --upgrade pip
+RUN pip install --upgrade "pip<24.1"
+
 
 # Копируем только файл зависимостей
 WORKDIR /app
