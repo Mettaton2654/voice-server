@@ -1,13 +1,13 @@
-# ---- Stage 1: минимальный Python с pip ----
-FROM python:3.11-slim
+# Используем легкий Python-образ с ffmpeg сразу
+FROM jrottenberg/ffmpeg:6.0-slim
 
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    libsndfile1 \
-    && rm -rf /var/lib/apt/lists/*
+# Минимальные системные зависимости
+RUN apt-get update && apt-get install -y libsndfile1 && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем Python-зависимости для инференса
+# Устанавливаем Python и pip
+RUN apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+
+# Устанавливаем Python-зависимости (CPU-only)
 RUN pip install --no-cache-dir \
     numpy==1.23.5 \
     scipy==1.10.0 \
@@ -16,7 +16,6 @@ RUN pip install --no-cache-dir \
     torchaudio==2.2.0+cpu \
     onnx \
     onnxruntime \
-    onnxsim \
     pyyaml \
     einops \
     edge_tts \
@@ -26,15 +25,9 @@ RUN pip install --no-cache-dir \
     loguru \
     rich
 
-# Копируем модель и скрипты инференса в контейнер
+# Рабочая директория
 WORKDIR /app
 COPY ./model /app/model
 COPY ./inference.py /app/inference.py
 
-# Запуск инференса
-CMD ["python", "inference.py"]
-
-EXPOSE 7860
-
-# ---- Запуск приложения ----
-CMD ["python", "app.py"]
+CMD ["python3", "inference.py"]
