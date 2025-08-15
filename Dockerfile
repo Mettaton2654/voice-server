@@ -1,42 +1,26 @@
-# --- Stage 1: Install dependencies ---
-FROM python:3.11-slim as builder
-
-# Обновление и установка необходимых системных пакетов
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    ffmpeg \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Установка pip последней версии
-RUN pip install --upgrade "pip<24.1"
-
-
-# Копируем только файл зависимостей
-WORKDIR /app
-COPY requirements.txt .
-
-# Установка зависимостей
-RUN pip install --no-cache-dir -r requirements.txt
-
-# --- Stage 2: Сборка финального образа ---
+# Используем лёгкий базовый образ
 FROM python:3.11-slim
 
+# Устанавливаем системные зависимости
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    git \
+    build-essential \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создаём рабочую директорию
 WORKDIR /app
 
-# Копируем зависимости из builder stage
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Копируем только необходимые файлы
+COPY requirements.txt .
 
-# Копируем исходный код проекта (без больших файлов)
+# Устанавливаем зависимости
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Копируем остальной код (меньше файлов — меньше образ)
 COPY . .
 
-# Устанавливаем переменные окружения
-ENV VOICE_SERVER_URL=https://<project>.up.railway.app/speak
-
-# Expose порт, который используется FastAPI/Flask
-EXPOSE 8000
-
-# Команда для запуска сервера (замени на актуальную)
-CMD ["python", "server.py"]
+# Указываем команду запуска
+CMD ["python", "inference_server/app.py"]
