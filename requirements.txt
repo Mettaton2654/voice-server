@@ -9,16 +9,10 @@ torchcrepe
 tqdm
 rich
 loguru
-scikit-maad
 praat-parselmouth
 librosa==0.9.1
-tensorboard
 tensorboardX
 transformers
-edge_tts
-langdetect
-pynvml
-faiss-cpu
+pyyaml
 einops
-local_attention
 piper-tts
